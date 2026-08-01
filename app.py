@@ -455,9 +455,7 @@ def markdown_to_pdf_bytes(md_text, title):
     return bytes(pdf.output())
 
 
-def report_page():
-    c.render_hero("개선 제안 리포트", "이탈 원인 분석을 바탕으로 한 고객서비스 만족도 개선 제안")
-
+def _render_report_tab():
     report_path = os.path.join(REPORT_DIR, "고객서비스_만족도개선_리포트.md")
     if not os.path.exists(report_path):
         st.warning(f"리포트 파일이 없습니다: {report_path}")
@@ -475,11 +473,9 @@ def report_page():
     )
 
 
-# ------------------------- 페이지 3: 채널 효율 -------------------------
+# ------------------------- 탭 2: 채널 효율 -------------------------
 
-def channel_efficiency_page():
-    c.render_hero("채널 효율", "채널별 유입 1건당 비용 — 다음 분기 예산 배분의 근거")
-
+def _render_channel_tab():
     spend_df = load_marketing_spend()
     total_spend = spend_df["spend"].sum()
     total_signups = spend_df["signups"].sum()
@@ -497,7 +493,7 @@ def channel_efficiency_page():
     st.plotly_chart(build_channel_efficiency_compare(spend_df), width="stretch", config=c.PLOTLY_CONFIG)
 
 
-# ------------------------- 페이지 4: 검색광고 성과 -------------------------
+# ------------------------- 탭 3: 검색광고 성과 -------------------------
 
 def build_ad_device_ctr(media_df):
     """디바이스별 CTR 비교. CTR이 더 낮은(비효율) 디바이스만 COLOR_HIGHLIGHT로 강조."""
@@ -547,9 +543,7 @@ def build_ad_campaign_cpa(media_df, signup_df):
     return fig
 
 
-def ad_performance_page():
-    c.render_hero("검색광고 성과", "자동차보험 검색광고 — 디바이스·캠페인별 효율 (오늘 정제한 합성 데이터 기준)")
-
+def _render_ad_tab():
     media_df = load_ad_performance()
     signup_df = load_signup_revenue()
 
@@ -574,15 +568,28 @@ def ad_performance_page():
     )
 
 
+# ------------------------- 페이지 2: 인사이트 리포트 (탭 3개 통합) -------------------------
+
+def insights_page():
+    c.render_hero("인사이트 리포트", "개선 제안 리포트 · 채널 효율 · 검색광고 성과를 한 페이지에 모았습니다")
+
+    tab1, tab2, tab3 = st.tabs(["개선 제안 리포트", "채널 효율", "검색광고 성과"])
+
+    with tab1:
+        _render_report_tab()
+    with tab2:
+        _render_channel_tab()
+    with tab3:
+        _render_ad_tab()
+
+
 # ------------------------- 앱 조립 (st.navigation) -------------------------
 
 st.set_page_config(page_title="고객은 왜 이탈하는가", layout="wide")
 
 pages = [
     st.Page(dashboard_page, title="대시보드", default=True),
-    st.Page(report_page, title="개선 제안 리포트"),
-    st.Page(channel_efficiency_page, title="채널 효율"),
-    st.Page(ad_performance_page, title="검색광고 성과"),
+    st.Page(insights_page, title="인사이트 리포트"),
 ]
 pg = st.navigation(pages)
 pg.run()
